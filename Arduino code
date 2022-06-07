@@ -1,0 +1,88 @@
+#include <SimpleDHT.h>
+#include <Servo.h>
+int pinDHT11 = 2;//pinul de date al senzorului de temperatura si umiditate este legat la pinul digital 2 de pe arduino
+const int pResistor = A0;//pinul la care este conectat fotorezistorul este legat la pinul analog A0 de pe arduino
+int pirPin = 3; //pinul de date al senzorului de miscare este legat la pinul digital 3 de pe arduino
+
+
+int value_light,value;//variabila  utilizata la stocarea rezistivitatii fotorezistorului 
+int motionDetected = 0;//variabila utilizata la stocarea detectarii miscarii
+int pirValue,motion;//variabila  utilizata la stocarea valorii primite de la senzorul de miscare
+
+SimpleDHT11 dht11;//de intrebat andrei
+Servo servo;//de intrebat andrei
+
+int angle = 20 ;//unghiul initial al servomotorului
+
+char val; //variabila utilizata la stocarea datelor primite prin portul serial
+
+
+
+
+void setup() {
+  servo.attach(8);//declararea pinului digital la care este legat servoul
+  servo.write(angle);//setarea servomotorului in pozitia de start
+  
+Serial.begin(9600);
+ pinMode(pResistor, INPUT);
+ pinMode(pirPin, INPUT);
+ delay(1000);//Pentru stabilizarea senzorului de miscare
+}
+
+
+
+void loop() {
+  pirValue = digitalRead(pirPin);
+  value = analogRead(pResistor);
+float temperature = 0;//declararea locala a unei variabile in care va fii stocata temperatura
+float humidity = 0;//declararea locala a unei variabile in care va fii stocata umiditatea
+int value_light = 0;//declararea locala a unei variabile in care va fii stocata valoarea de adevar a luminii
+
+int err = SimpleDHTErrSuccess;//variabila locala utilizata la stocarea unei posibile erori a citirii senzorului de temperatura si umiditate
+if ((err = dht11.read2(pinDHT11, &temperature, &humidity, NULL)) != SimpleDHTErrSuccess) {
+  //verifica daca exista erori de citire ale senzorului de umiditate si temperatura
+  
+//Serial.print("Read DHT11 failed, err="); Serial.println(err);
+
+delay(2000);
+return;
+}
+
+if (value > 200){//decidem valoarea la care este intuneric in functie de rezistivitatea fotorezistorului  
+    value_light = 4;
+  }
+  else {
+    value_light = 5;
+  }
+if (pirValue == 0){//atribuim unei variabile valoarea inregistrata de senzorul de miscare
+    motion = 0;
+  }
+else if (pirValue == 1){
+    motion = 1;
+  }
+
+  //trimitem datele primite de la senzori prin portul serial catre aplicatie
+Serial.print((float)temperature);
+Serial.print(",");
+Serial.println((float)humidity);
+Serial.print(",");
+Serial.println((int)value_light);
+Serial.print(",");
+Serial.println((int)motion);    
+
+delay(1000);
+
+if (Serial.available()) { // Daca exista date de intrare pe portul serial
+   
+    val = Serial.read(); // citeste valoarea primita de la aplicatie si ii comanda servomotorului sa ia una din cele doua pozitii de lucru 
+    
+    if (val == '2') {
+      servo.write(10);
+      
+    } if (val == '3') {
+      servo.write(110);
+      
+    }
+    delay(1000);
+  }
+}
