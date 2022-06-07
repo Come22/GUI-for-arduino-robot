@@ -1,0 +1,345 @@
+import processing.video.*;
+import processing.serial.*;
+import meter.*;
+
+//Incarcarea imaginilor
+PImage light_on, light_off,yes_motion,no_motion ;
+
+Serial port;  // Creearea obiectului port in clasa serial
+
+String[] list;
+
+//Pentru delay
+//long lastTime = 0;
+
+//Coordonatele butoanelor
+float x = 0;
+float y = 0;
+float w = 0;
+float h = 0;
+
+float f1 = 50;
+float f2 = 900;
+float f3 = 450;
+float f4 = 50;
+
+float w1 = 600;
+float w2 = 900;
+float w3 = 450;
+float w4 = 50;
+
+float l1 = 900;
+float l2 = 400;
+float l3 = 100;
+float l4 = 100;
+
+float cl1 = 700;
+float cl2 = 780;
+float cl3 = 100;
+float cl4 = 100;
+float cd1 = 825;
+float cd2 = 780;
+float cd3 = 100;
+float cd4 = 100;
+float cr1 = 950;
+float cr2 = 780;
+float cr3 = 100;
+float cr4 = 100;
+float cu1 = 825;
+float cu2 = 650;
+float cu3 = 100;
+float cu4 = 100;
+
+//variabila de test
+float test = 0;
+
+Meter m, m2;
+
+
+Capture video;
+
+//output
+int servoValue = 0;
+
+void setup() {
+  
+      port = new Serial(this, "/dev/ttyACM1", 9600);
+ // String portName = Serial.list()[0]; //change the 0 to a 1 or 2 etc. to match your port
+   //port = new Serial(this, portName, 9600);
+   
+  light_on = loadImage("light_on.png");
+  light_off = loadImage("light_off.png");
+  yes_motion = loadImage("motion.jpg");
+  no_motion = loadImage("no_motion.jpg");
+  
+  //   lastTime = millis();//delay
+
+  size(1100, 1000);
+  background(80,80,80);
+  stroke(0);
+  
+    video = new Capture(this, 640, 480, 30);
+      video.start();
+ 
+  //Parametrii ceasurilor de input pentru temperatura si umiditate
+  fill(120, 50, 0);//ajustarea culorii fontului ceasului
+  m = new Meter(this, 50, 100);//marimea ceasului si creearea lui 
+  m.setTitleFontSize(20);
+  m.setTitleFontName("Arial bold");
+  m.setTitle("Temperatura (C)");
+  m.setDisplayDigitalMeterValue(true);
+  
+  // Scala ceasului indicator
+  String[] scaleLabelsT = {"0", "10", "20", "30", "40", "50", "60", "70", "80"};
+  m.setScaleLabels(scaleLabelsT);
+  m.setScaleFontSize(18);
+  m.setScaleFontName("Times New Roman bold");
+  m.setScaleFontColor(color(200, 30, 70));
+  
+  m.setArcColor(color(141, 113, 178));
+  m.setArcThickness(10);
+  m.setMaxScaleValue(80);
+  
+  m.setNeedleThickness(3);
+  
+  m.setMinInputSignal(0);
+  m.setMaxInputSignal(80);
+
+  // creearea celui de al doilea ceas indicator si pozitionarea lui in functie de primul
+  int mx = m.getMeterX();
+  int my = m.getMeterY();
+  int mw = m.getMeterWidth();
+  
+  m2 = new Meter(this, mx + mw + 120, my);
+  m2.setTitleFontSize(20);
+  m2.setTitleFontName("Arial bold");
+  m2.setTitle("Humidity (%)");
+  m2.setDisplayDigitalMeterValue(true);
+  
+  String[] scaleLabelsH = {"0", "10", "20", "30", "40", "50", "60", "70", "80", "90", "100"};
+  m2.setScaleLabels(scaleLabelsH);
+  m2.setScaleFontSize(18);
+  m2.setScaleFontName("Times New Roman bold");
+  m2.setScaleFontColor(color(200, 30, 70));
+  
+  m2.setArcColor(color(141, 113, 178));
+  m2.setArcThickness(10);
+  m2.setMaxScaleValue(100);
+  
+  m2.setNeedleThickness(3);
+  
+  m2.setMinInputSignal(0);
+  m2.setMaxInputSignal(100);
+  
+
+
+}
+
+
+void draw() {
+  
+ 
+  
+  textSize(30);
+  fill(255, 255, 255);
+  textAlign(CENTER);
+  text("Arduino Thingy", 550, 50);
+ 
+  
+  //rect(x, y, w, h);
+  //fill(000);
+  //textSize(32);
+  //text("SERVOO", x+(w/4), y+(h/4), w-(w/4), h-(h/4)); 
+  //fill(0, 102, 153);
+  
+  //int value = 50;
+  //m.updateMeter(value);
+  //m2.updateMeter(value);
+  
+
+  
+  fill(300,300,300);
+  rect(l1,l2,l3,l4); 
+  textSize(20);
+  fill(0, 0, 0);
+  textAlign(CENTER, CENTER);
+  text("Lights", l1, l2, l3, l4); 
+  
+  fill(204,153,255);
+  rect(f1,f2,f3,f4); 
+  textSize(20);
+  fill(0, 0, 0);
+  textAlign(CENTER, CENTER);
+  text("Food Drop", f1, f2, f3, f4); 
+  
+  fill(102,153,255);
+  rect(w1,w2,w3,w4);
+  textSize(20);
+  fill(0, 0, 0);
+  textAlign(CENTER, CENTER);
+  text("Water Drop", w1, w2, w3, w4); 
+  
+  fill(0,204,255);
+  rect(cu1,cu2,cu3,cu4);
+  textSize(20);
+  fill(0, 0, 0);
+  textAlign(CENTER, CENTER);
+  text("Up", cu1, cu2, cu3, cu4);
+  
+    fill(0,204,255);
+  rect(cl1,cl2,cl3,cl4);
+  textSize(20);
+  fill(0, 0, 0);
+  textAlign(CENTER, CENTER);
+  text("Left", cl1, cl2, cl3, cl4); 
+  
+    fill(0,204,255);
+  rect(cd1,cd2,cd3,cd4);
+  textSize(20);
+  fill(0, 0, 0);
+  textAlign(CENTER, CENTER);
+  text("Down", cd1, cd2, cd3, cd4); 
+  
+    fill(0,204,255);
+  rect(cr1,cr2,cr3,cr4);
+  textSize(20);
+  fill(0, 0, 0);
+  textAlign(CENTER, CENTER);
+  text("Right", cr1, cr2, cr3, cr4); 
+  
+   //image(light_off,750,400,100,100);
+   //image(no_motion,825,530,100,100);
+   
+  //if (mousePressed) {
+  //  if (mouseX>x && mouseX <x+w && mouseY>y && mouseY <y+h) {
+  //    println("The mouse is pressed and over the button");
+  //    fill(0);
+  //    //do stuff 
+  //    test = test + 1;
+  //    println("TEST = " + test);
+  //  }
+  //}
+  
+ // input from arduino
+  
+    if (port.available() > 0 && frameCount % 10 == 0) {
+      
+    //delay facut o data la 10 frame rateuri deoarece delay punea pauza la tot programul
+     
+    
+    
+    //atribuim datele din input unui string
+    String val = port.readString();
+    list = null;
+    if (val != null){
+    
+    //valorile sunt separate prin virgula
+    list = split(val, ',');
+    }
+    if (list  != null && list.length>3){
+    float temp = float(list[0]);
+    float hum = float(list[1]);
+    float light = float(list[2]);
+    float motion = float(list[3]);
+      println("Temperatura: " + temp + " C  " + "Umiditatea: " + hum + " %" );
+    
+    m.updateMeter(int(temp));
+    m2.updateMeter(int(hum));
+   //verificarea datelor de intrare 
+    if (light == 4){
+    image(light_on,750,400,100,100);
+      println("Este lumina");  
+    }
+    
+    if (light == 5){
+        image(light_off,750,400,100,100);
+          println("Nu este lumina"); 
+    }
+    
+     if (motion == 1){
+        image(yes_motion,825,530,100,100);
+          println("Se detecteaza miscare");  
+    }
+    if (motion == 0){
+        image(no_motion,825,530,100,100);
+           println("Nu se detecteaza miscare"); 
+    }
+    }
+      
+    }
+    
+    //video start
+     if(video.available()){
+    video.read();}
+    
+    image(video, 50, 400);
+    
+    
+}
+
+
+//functionalitatile butoanelor
+void mouseReleased() {
+  if (mouseX>x && mouseX <x+w && mouseY>y && mouseY <y+h) {
+   println("The mouse is pressed and over the button");
+      fill(0);
+
+      test = test + 1;
+      println("TEST = " + test);}
+      
+    if (mouseX>f1 && mouseX <f1+f3 && mouseY>f2 && mouseY <f2+f4 ) {
+   println("The mouse is pressed and over the button");
+      fill(0);
+ 
+      test = test + 1;
+      println("TEST = " + test);
+      if (servoValue == 1) {
+        port.write('2');
+        servoValue = 0;
+         println("SERVO 0");
+      } else if (servoValue == 0) {
+        port.write('3');
+        servoValue = 1;
+         println("SERVO 180");
+      }
+     
+  
+
+
+
+}   
+      
+      if (mouseX>w1 && mouseX <w1+w3 && mouseY>w2 && mouseY <w2+w4) {
+   println("The mouse is pressed and over the button");
+      fill(0);
+ 
+      test = test + 1;
+      println("TEST = " + test);}  
+      
+       if (mouseX>l1 && mouseX <l1+l3 && mouseY>l2 && mouseY <l2+l4) {
+   println("The mouse is pressed and over the button");
+      fill(0);
+
+      test = test + 1;
+      println("TEST = " + test);}  
+      
+}    
+      
+      
+      
+      
+      
+//      if (servoValue == 1) {
+//        myPort.write('0');
+//        servoValue = 0;
+//         println("SERVO 0");
+//      } else {
+//        myPort.write('1');
+//        servoValue = 1;
+//         println("SERVO 180");
+//      }
+//      for (int i = 0; i < Serial.list().length; i++) {
+//        println(Serial.list()[i]);
+//      }
+//  }
+//}
